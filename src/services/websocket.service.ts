@@ -55,6 +55,7 @@ export const initializeWebSocket = (server: Server) => {
         if (data.type === 'register' && data.deviceId && data.ip) {
           const { deviceId } = data;
           ip = data.ip;
+          console.log(`[WebSocket] Device ${deviceId} registering from IP ${ip}`);
           // Store the client in this server instance's local map
           clients.set(deviceId, { ws, ip });
           console.log(`[WebSocket] Device ${deviceId} registered locally from IP ${ip}. Total clients on this instance: ${clients.size}`);
