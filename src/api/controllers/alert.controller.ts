@@ -6,21 +6,19 @@ import { Device } from '../../models/device.model';
 import { SortOrder } from 'mongoose';
 
 export const triggerAlert = async (req: Request, res: Response) => {
-  // --- MODIFIED: Expect 'ips' to be an array of strings ---
-  const { ips, message, title } = req.body;
+  const { ips, data } = req.body;
 
   // Validate the input
-  if (!ips || !Array.isArray(ips) || ips.length === 0 || !message) {
+  if (!ips || !Array.isArray(ips) || ips.length === 0) {
     return res.status(400).json({ 
-      error: 'Invalid request body. "ips" must be a non-empty array and "message" is required.' 
+      error: 'Invalid request body. "ips" must be a non-empty array.' 
     });
   }
 
   // This is the payload that will be sent to the mobile clients
   const alertPayload = {
     type: 'alert',
-    title: title || 'EMERGENCY ALERT',
-    message,
+    data: data || {}, // Use provided data or an empty object
     timestamp: new Date().toISOString(),
   };
 
