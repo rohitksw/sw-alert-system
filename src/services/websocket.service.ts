@@ -75,11 +75,9 @@ export const initializeWebSocket = (server: Server) => {
       try {
         const data = JSON.parse(message.toString());
         
-        console.log(`1. Data received from client: ${JSON.stringify(data)}`); 
         // --- 2. MODIFIED REGISTRATION LOGIC ---
         // We now expect the client to provide its deviceId AND its public IP address.
         if (data.type === 'register' && data.deviceId && data.ip) {
-          console.log(`2. Data received from client: ${JSON.stringify(data)}`); 
           const { deviceId, ip } = data; // Get IP from the payload
 
           
