@@ -78,13 +78,14 @@ export const initializeWebSocket = (server: Server) => {
         // --- 2. MODIFIED REGISTRATION LOGIC ---
         // We now expect the client to provide its deviceId AND its public IP address.
         if (data.type === 'register' && data.deviceId && data.ip) {
+          console.log(`Data received from client: ${JSON.stringify(data)}`); 
           const { deviceId, ip } = data; // Get IP from the payload
 
-          console.log(`[WebSocket] Device ${deviceId} registering with provided IP ${ip}`);
           
           // Store the client with its client-provided IP
           clients.set(deviceId, { ws, ip });
-          console.log(`[WebSocket] Device ${deviceId} registered locally. Total clients on this instance: ${clients.size}`);
+       
+          console.log(`[WebSocket] Device ${deviceId} registered with provided IP ${ip}. Total clients on this instance: ${clients.size}`);
           
           // Persist to MongoDB using the client-provided IP
           await Device.findOneAndUpdate(
