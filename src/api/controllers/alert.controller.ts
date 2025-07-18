@@ -6,10 +6,14 @@ import { Device } from '../../models/device.model';
 import { SortOrder } from 'mongoose';
 
 export const triggerAlert = async (req: Request, res: Response) => {
-  const { ip: targetIp, message, title } = req.body;
+  // --- MODIFIED: Expect 'ips' to be an array of strings ---
+  const { ips, message, title } = req.body;
 
-  if (!targetIp || !message) {
-    return res.status(400).json({ error: 'Fields "ip" and "message" are required.' });
+  // Validate the input
+  if (!ips || !Array.isArray(ips) || ips.length === 0 || !message) {
+    return res.status(400).json({ 
+      error: 'Invalid request body. "ips" must be a non-empty array and "message" is required.' 
+    });
   }
 
   // This is the payload that will be sent to the mobile clients
@@ -20,19 +24,28 @@ export const triggerAlert = async (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
   };
 
-  // The message to publish via Redis
-  const redisMessage = JSON.stringify({
-    targetIp,
-    payload: alertPayload,
-  });
-
   try {
-    // Publish the message to the Redis channel.
-    // All subscribed server instances will receive this.
-    await redisPublisher.publish(REDIS_ALERT_CHANNEL, redisMessage);
+    let publishedCount = 0;
+    // --- MODIFIED: Loop through the array of IPs ---
+    for (const targetIp of ips) {
+      if (typeof targetIp === 'string' && targetIp.length > 0) {
+        // The message to publish via Redis
+        const redisMessage = JSON.stringify({
+          targetIp, // Publish for each individual IP
+          payload: alertPayload,
+        });
+
+        // Publish the message to the Redis channel.
+        await redisPublisher.publish(REDIS_ALERT_CHANNEL, redisMessage);
+        publishedCount++;
+        console.log(`[HTTP] Alert for IP ${targetIp} published to Redis channel.`);
+      }
+    }
     
-    console.log(`[HTTP] Alert for IP ${targetIp} published to Redis channel.`);
-    res.status(200).json({ status: 'success', message: 'Alert trigger has been broadcasted.' });
+    res.status(200).json({ 
+      status: 'success', 
+      message: `Alert trigger has been broadcasted for ${publishedCount} IP(s).` 
+    });
   } catch (error) {
     console.error('[HTTP] Failed to publish alert to Redis:', error);
     res.status(500).json({ error: 'Internal server error.' });
