@@ -32,7 +32,7 @@ export const initializeWebSocket = (server: Server) => {
   wss.on('connection', (ws: IExtendedWebSocket, req) => {
     // The IP address can be found in different headers if behind a proxy.
     // This is a robust way to get the real client IP.
-    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+    let ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
     console.log(`[WebSocket] New client connected from IP: ${ip}`);
 
     // --- HEARTBEAT SETUP ---
@@ -50,11 +50,11 @@ export const initializeWebSocket = (server: Server) => {
     ws.on('message', async (message: Buffer) => {
       try {
         const data = JSON.parse(message.toString());
-
+        
         // Handle the 'register' message type
-        if (data.type === 'register' && data.deviceId) {
+        if (data.type === 'register' && data.deviceId && data.ip) {
           const { deviceId } = data;
-
+          ip = data.ip;
           // Store the client in this server instance's local map
           clients.set(deviceId, { ws, ip });
           console.log(`[WebSocket] Device ${deviceId} registered locally from IP ${ip}. Total clients on this instance: ${clients.size}`);
